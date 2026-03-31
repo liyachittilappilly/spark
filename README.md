@@ -202,14 +202,9 @@ Alerts + Recommendations + AI Assistant
 
 ## 👨‍💻 Team
 
-* Your Team Name
-* Members
-
----
-
-## 📌 Hackathon Note
-
-This project leverages **Google AI tools efficiently within limited cloud credits**, focusing on **impact, scalability, and real-world usability**.
+* SPARK
+* LIYA S CHITTILAPPILLY
+* CHANJAL CHANDRAN
 
 ---
 
