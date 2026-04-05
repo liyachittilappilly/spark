@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: farms
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required, 1-100 chars)
+    //   - polygon: list (required, max 100 points)
+    //   - userId: string (required, matches auth.uid)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: pest_detections
+    // Document ID: auto-generated
+    // Fields:
+    //   - pestName: string (required)
+    //   - confidence: string (required)
+    //   - recommendation: string (required)
+    //   - count: number (required, non-negative)
+    //   - status: string (required)
+    //   - userId: string (required, matches auth.uid)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: alerts
+    // Document ID: auto-generated
+    // Fields:
+    //   - type: string (required)
+    //   - message: string (required, max 500 chars)
+    //   - userId: string (required, matches auth.uid)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "liyachittilappilly@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidString(field, min, max) {
+      return request.resource.data[field] is string && 
+             request.resource.data[field].size() >= min && 
+             request.resource.data[field].size() <= max;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidFarm(data) {
+      return hasRequiredFields(['name', 'polygon', 'userId', 'createdAt']) &&
+             hasOnlyAllowedFields(['name', 'polygon', 'userId', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.polygon is list && data.polygon.size() <= 100 &&
+             data.userId == request.auth.uid &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidPestDetection(data) {
+      return hasRequiredFields(['pestName', 'confidence', 'recommendation', 'count', 'status', 'userId', 'createdAt']) &&
+             hasOnlyAllowedFields(['pestName', 'confidence', 'recommendation', 'count', 'status', 'userId', 'createdAt']) &&
+             data.pestName is string &&
+             data.count is number && data.count >= 0 &&
+             data.userId == request.auth.uid &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidAlert(data) {
+      return hasRequiredFields(['type', 'message', 'userId', 'createdAt']) &&
+             hasOnlyAllowedFields(['type', 'message', 'userId', 'createdAt']) &&
+             data.type is string &&
+             data.message is string && data.message.size() <= 500 &&
+             data.userId == request.auth.uid &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /farms/{farmId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidFarm(request.resource.data);
+      allow update: if isAuthenticated() && isValidFarm(request.resource.data) && isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    match /pest_detections/{detectionId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidPestDetection(request.resource.data);
+      allow update: if isAuthenticated() && isValidPestDetection(request.resource.data) && isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    match /alerts/{alertId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidAlert(request.resource.data);
+      allow update: if isAuthenticated() && isValidAlert(request.resource.data) && isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isOwner(userId) && request.resource.data.role == 'user';
+      allow update: if isAuthenticated() && isOwner(userId) && request.resource.data.role == resource.data.role;
+    }
+
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

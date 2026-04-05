@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "Farm": {
+      "title": "Farm Boundary",
+      "description": "Represents a farm's geographical boundary and metadata.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "polygon": { "type": "array", "items": { "type": "object" } },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "polygon", "userId", "createdAt"]
+    },
+    "PestDetection": {
+      "title": "Pest Detection Result",
+      "description": "Represents a single pest detection event with AI analysis.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "pestName": { "type": "string" },
+        "confidence": { "type": "string" },
+        "recommendation": { "type": "string" },
+        "count": { "type": "number" },
+        "status": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["pestName", "count", "status", "userId", "createdAt"]
+    },
+    "Alert": {
+      "title": "System Alert",
+      "description": "Represents a critical alert triggered by the system.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "message": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "message", "userId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/farms/{farmId}": {
+      "schema": "Farm",
+      "description": "Collection of farm boundaries."
+    },
+    "/pest_detections/{detectionId}": {
+      "schema": "PestDetection",
+      "description": "Collection of pest detection results."
+    },
+    "/alerts/{alertId}": {
+      "schema": "Alert",
+      "description": "Collection of system alerts."
+    }
+  }
+}

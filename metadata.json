@@ -1,0 +1,8 @@
+{
+  "name": "PaddyGuard AI: Smart Pest Detection",
+  "description": "An AI-powered geospatial monitoring system for paddy fields, featuring NDVI crop health analysis, weather-based pest prediction, and automated pest identification.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
